@@ -6,11 +6,7 @@
 #
 # Author: Fabio Ros
 ###################################
-
-if [[ ! -x "${commands[hass-cli]}" ]]; then
-  print "zsh hass-cli plugin: hass-cli not installed. Please install hass-cli. See https://github.com/home-assistant/home-assistant-cli" >&2
-  return 1
-fi
+export __HASSC_SCRIPT_DIR=${0:a:h}
 
 # Aliases
 alias hacli='hass-cli'
@@ -22,23 +18,6 @@ alias hass-cli_device='hass-cli device list'
 alias hass-cli_entity='hass-cli entity list'
 alias hass-cli_syshealth='hass-cli system health'
 alias hass-cli_syslog='hass-cli system log'
-
-#######################################
-# Generate autocomplete functions
-# Globals:
-#   ZSH_CACHE_DIR
-# Arguments:
-#   None
-# Returns:
-#   None
-#######################################
-function hass-cli_compgen(){
-    local __HASS_CLI_COMPLETION_FILE="${ZSH_CACHE_DIR}/hass_cli_completion"
-    if [[ -f $__HASS_CLI_COMPLETION_FILE ]]; then
-        rm $__HASS_CLI_COMPLETION_FILE
-    fi
-    source <(hass-cli completion zsh)
-}
 
 #######################################
 # Show defined environment variables
@@ -99,34 +78,33 @@ function hass-cli_open(){
 }
 
 #######################################
-# Init function
+# Generate completion code
 # Globals:
-#   HASS_DOTENV
-#   ZSH_CACHE_DIR
 #   HASS_SERVER
 # Arguments:
 #   None
 # Returns:
 #   None
+# TODO: test properly and invalidate on lifetime
 #######################################
-__hass-cli(){
+_hass-cli_completion(){
 
-    # source env
-    local HASS_DOTENV="${HASS_DOTENV:-${HOME}/.hass-cli.env}"
-    [[ -f $HASS_DOTENV ]] && hass-cli_source_env $HASS_DOTENV
+	local __HASS_CLI_CACHE_COMPLETION_FILE="${ZSH_CACHE_DIR}/_hass-cli_completion"
+	local __HASS_CLI_LOCAL_COMPLETION_FILE="${__HASSC_SCRIPT_DIR}/_hass-cli"
 
-    # Generate completion cache
-    __HASS_CLI_COMPLETION_FILE="${ZSH_CACHE_DIR}/hass_cli_completion"
-    if [[ ! -f $__HASS_CLI_COMPLETION_FILE ]]; then
-        hass-cli completion zsh >! $__HASS_CLI_COMPLETION_FILE
-    fi
+	# Generate
+	if [[ ! -f $__HASS_CLI_CACHE_COMPLETION_FILE || -z $(cat $__HASS_CLI_CACHE_COMPLETION_FILE) ]]; then # if bad cache
+		if [[ ! -x "${commands[hass-cli]}" ]]; then # if coommand not available
+			cat $__HASS_CLI_LOCAL_COMPLETION_FILE > $__HASS_CLI_CACHE_COMPLETION_FILE
+		else
+			hass-cli completion zsh >! $__HASS_CLI_CACHE_COMPLETION_FILE
+		fi
+	fi
 
-    # Source completion from cache if exists, else load with low impact
-    if [[ -f $__HASS_CLI_COMPLETION_FILE ]]; then
-        source $__HASS_CLI_COMPLETION_FILE
-    else
-        eval "$(_HASS_CLI_COMPLETE=source_zsh hass-cli)"
-    fi
+	# Load
+	[ -f $__HASS_CLI_CACHE_COMPLETION_FILE ] && source $__HASS_CLI_CACHE_COMPLETION_FILE
 }
 
-__hass-cli
+# Source
+hass-cli_source_env ${HASS_DOTENV:-${HOME}/.hass-cli.env}
+_hass-cli_completion
