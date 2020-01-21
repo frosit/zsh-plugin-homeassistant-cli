@@ -78,6 +78,39 @@ function hass-cli_open(){
 }
 
 #######################################
+# Wrapper for hass-cli with options from env
+#######################################
+function hacl(){
+    local HASS_BIN=$(which hass-cli)
+    local PARAMS=()
+
+    # Params to command line
+    if [[ -n ${HASS_VERBOSE} && ${HASS_VERBOSE} == true ]]; then
+        PARAMS+=("--verbose")
+    fi
+    if [[ -n ${HASS_INSECURE} && ${HASS_INSECURE} == true  ]]; then
+        PARAMS+=("--insecure")
+    fi
+    if [[ -n ${HASS_EXCEPTIONS} && ${HASS_EXCEPTIONS} == true  ]]; then
+        PARAMS+=("-x")
+    fi
+    if [[ -n ${HASS_DEBUG} && ${HASS_DEBUG} == true  ]]; then
+        PARAMS+=("--debug")
+    fi
+    if [[ -n ${HASS_OUTPUT+x} && ${HASS_OUTPUT} != auto ]]; then
+        PARAMS+=("--output=\"${HASS_OUTPUT}\"")
+    fi
+
+    for item in ${@}; do
+        PARAMS+=(${item})
+    done
+
+    echo -e ${PARAMS[@]}
+
+    echo ${PARAMS[@]} | xargs $(which hass-cli)
+}
+
+#######################################
 # Generate completion code
 # Globals:
 #   HASS_SERVER
@@ -102,7 +135,10 @@ _hass-cli_completion(){
 	fi
 
 	# Load
-	[ -f $__HASS_CLI_CACHE_COMPLETION_FILE ] && source $__HASS_CLI_CACHE_COMPLETION_FILE
+	if [[ -f $__HASS_CLI_CACHE_COMPLETION_FILE ]]; then
+	    source $__HASS_CLI_CACHE_COMPLETION_FILE
+#	    compdef _hass_cli_completion ha-cli;
+	fi
 }
 
 # Source
