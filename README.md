@@ -1,29 +1,40 @@
 # Hass-cli Plugin for Oh-My-Zsh
 
-This plugin provides completion and helpers for the [Home Assistant Command-line interface (hass-cli)](https://github.com/home-assistant/home-assistant-cli) which allows one to work with a local or a remote [Home Assistant](https://home-assistant.io/) instance directly from the command-line.
+This plugin provides completion and (configuration) helpers for the [Home Assistant Command-line interface (hass-cli)](https://github.com/home-assistant/home-assistant-cli). It allows command line interaction with [Home Assistant](https://home-assistant.io/) instances.
 
-# Getting started
+# Prerequisites
 
-*Hass-cli should be [installed](https://github.com/home-assistant/home-assistant-cli#installation) and optionally [setup](https://github.com/home-assistant/home-assistant-cli#setup) for this plugin to work*
-
-__Installing the plugin from the repository.__
+* [hass-cli](https://github.com/home-assistant/home-assistant-cli#installation)
+* [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh#getting-started)
 
 ```bash
 git clone https://github.com/frosit/zsh-plugin-homeassistant-cli $ZSH_CUSTOM/plugins/hass-cli
 ```
 
-__Enabling the plugin in oh-my-zsh__
-
 To use, add `hass-cli` to the list of plugins in your `.zshrc` file:
 
 `plugins=(... hass-cli)`
 
-__Minimal configuration__
+# Configuration
 
-Hass-cli requires a server `$HASS_SERVER / --server` and `$HASS_TOKEN / --token` to be defined in order to communicate with home assistant.
-These could be added to your .zshrc file or specified at runtime.
+`hass-cli` can autodetect the server url of a local [Home Assistant](https://home-assistant.io/) instance. If this can't be detected you have to specify it together with either a token or password. These can be specified in your session, env vars or on the command line.
 
-*The `$HASS_SERVER` is actually optional and autodetected within your network by default, however this is not recommended*
+```.env
+$HASS_SERVER / --server [server]
+$HASS_TOKEN / --token [token]
+# or
+$HASS_PASSWORD / --password [password]
+```
+
+_supported variables_
+
+```.env
+HASS_SERVER="" (required - server url or "auto")
+HASS_TOKEN="" (preffered - Brearer long lasting token)
+HASS_PASSWORD="" (optional - API password)
+HASS_CERT="" (optional - path to client cert.pem)
+```
+_example_
 
 ```bash
 # .zshrc
@@ -34,26 +45,50 @@ export HASS_TOKEN=<secret>
 hass-cli --server=https://hassio.local:8123 --token=xxxxxxxxxx <arguments>
 ```
 
-__Functions__
+__Using the wizard (optional)__
+
+Running `hass-cli_env` will start a wizard that shows the current variables and asks for the missing and writes them to `~/.hass-cli.env`
+
+Currently the following variables are supported, future branches support all possible variables.
+
+# Additional functions and aliases
+
+Besides easy autocomplete, this plugin was meant to simplify all the options by defining the command arguments in mostly .env files. The aliases are reminders to help you fly a bit more through your terminal.
+
+_aliases_
+
+```
+alias hacli='hass-cli'
+alias hasscli='hass-cli'
+alias hass-cli_check_config='hass-cli service call homeassistant.check_config'
+alias hass-cli_restart='hass-cli service call homeassistant.restart'
+alias hass-cli_states='hass-cli state list'
+alias hass-cli_devices='hass-cli device list'
+alias hass-cli_entities='hass-cli entity list'
+alias hass-cli_syshealth='hass-cli system health'
+alias hass-cli_syslog='hass-cli system log'
+```
+
+_Functions_
 
 * `hass-cli_show_env` : shows currently defined HASS_* env variables.
-* `hass-cli_source_env` : Sources a dotenv file, optionally accepts a path to an env file.
-* `hass-cli_open` : Opens the homeassistant instance in the browser.
+* `hass-cli_source_env [file]` : Sources your .hass-cli.env file or the file specified as argument
+* `hass-cli_open` : Open HA in your browser
+* `hass-cli_env` : Shows the current env var or starts the wizard if vars are missing.
+* `_hass-cli_completion`: (re)generate completion
 
 # Advanced configuration
 
-This plugin has more advanced configurations possible in terms of defining variables and additional functions to aid in handling variables.
+The [Home Assistant](https://home-assistant.io/) API is poorly documented but has a lot of options that are really useful. Using the advanced configuration you can basically preset options to use in different situations / environments (using .env files). This way you can for example preset additional columns for certain queries and have the output in json so it can easily be parsed with `jq`.
 
-__Using a dotenv file__
-
-A dotenv file can be used to have these variables active. Automatically this plugin will look for an `.hass-cli.env` file located in the home directory.
-The env var `HASS_DOTENV` can be set to a different dotenv file.
+For now this branch is limited to different .env files. The dev branch supports all the options.
 
 ```bash
 export HASS_DOTENV=$HOME/path/to/my/project/.env
+
+# or 
+
+hass-cli_source_env [file]
 ```
 
-# To Do
-
-* Testing
-* Finish extended arguments handling
+You can also just activate the dotenv zsh plugin, works the same, for now.
