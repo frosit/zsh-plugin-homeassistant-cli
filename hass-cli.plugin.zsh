@@ -94,9 +94,9 @@ _hass-cli_completion(){
 
 	# Generate
 	if [[ ! -f $__HASS_CLI_CACHE_COMPLETION_FILE || -z $(cat $__HASS_CLI_CACHE_COMPLETION_FILE) ]]; then # if bad cache
-		if [[ ! -x "${commands[hass-cli]}" ]]; then # if coommand not available
+		if [[ ! -x "${commands[hass-cli]}" ]]; then # if hass-cli not defined, copy completion from repo
 			cat $__HASS_CLI_LOCAL_COMPLETION_FILE > $__HASS_CLI_CACHE_COMPLETION_FILE
-		else
+		else # generate
 			hass-cli completion zsh >! $__HASS_CLI_CACHE_COMPLETION_FILE
 		fi
 	fi
